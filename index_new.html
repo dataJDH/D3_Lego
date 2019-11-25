@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<head>
+
+	<title>Lego Sets by Year from Rebrickable</title>		
+
+	<style>
+
+	.axis {
+	  font: 10px sans-serif;
+	}
+
+	.axis path,
+	.axis line {
+	  fill: none;
+	  stroke: #000;
+	  shape-rendering: crispEdges;
+	}
+
+	</style>
+</head>
+
+<body>
+	
+	<script type="text/javascript" src="lib/d3/d3.min.js"></script>
+
+	<script>
+
+		var margin = {top: 20, right: 20, bottom: 70, left: 40},
+    		width = 600 - margin.left - margin.right,
+    		height = 300 - margin.top - margin.bottom;
+
+		
+		// Parse the date / time
+		var parseDate = d3.timeFormat("%Y").parse;
+
+		var x = d3.scaleBand()
+			.rangeRound([0, width], .05);
+
+		var y = d3.scaleLinear()
+			.range([height, 0]);
+
+		var xAxis = d3.axisBottom()
+    			.scale(x)
+    			.ticks(d3.timeYear.every(3));
+
+		var yAxis = d3.axisLeft()
+    			.scale(y)
+    			.ticks(7);
+
+		var svg = d3.select("body").append("svg")
+    			.attr("width", width + margin.left + margin.right)
+    			.attr("height", height + margin.top + margin.bottom)
+  		.append("g")
+    			.attr("transform", 
+          		"translate(" + margin.left + "," + margin.top + ")");
+
+		
+		d3.csv("q3.csv").then(function(data) {
+
+    			data.forEach(function(d) {
+        			d.year = +d.year;
+        			d.running_total = +d.running_total;
+    			});
+			//console.log(data);
+			
+			x.domain(data.map(function(d) { return d.year; }));
+  			y.domain([0, d3.max(data, function(d) { return d.running_total; })]);
+
+			svg.append("g")
+      					.attr("class", "x axis")
+      					.attr("transform", "translate(0," + height + ")")
+      					.call(xAxis)
+    				.selectAll("text")
+      					.style("text-anchor", "end")
+					.attr("dx", "1em")
+      					.attr("dy", "1em")
+					.style("font-size", "8px");
+
+			var ticks = d3.selectAll(".tick text");
+
+			ticks.each(function(_, i) {
+  				if (i % 3 != 0) d3.select(this).remove();
+			});
+
+			svg.append("g")
+      					.attr("class", "y axis")
+      					.call(yAxis)
+					.style("font-size", "8px");
+
+
+			svg.selectAll("text.title")
+                			.data(data)
+               			.enter()
+                			.append("text")
+					.attr("x", (width / 2))
+                			.attr("y", 0 - (margin.top / 2))
+        				.attr("text-anchor", "middle")  
+        				.style("font-size", "12px")   
+        				.text("Lego Sets by Year from Rebrickable");
+
+  			svg.selectAll("text.id")
+                			.data(data)
+               			.enter()
+                			.append("text")
+					.attr("x", (width - 60))
+                			.attr("y", (height + 40)) 
+        				.style("font-size", "11px")   
+        				.text("graph");
+
+			svg.selectAll("bar")
+      					.data(data)
+    				.enter().append("rect")
+      					.style("fill", "steelblue")
+      					.attr("x", function(d) { return x(d.year); })
+      					.attr("width", (x.bandwidth()-1))
+      					.attr("y", function(d) { return y(d.running_total); })
+      					.attr("height", function(d) { return height - y(d.running_total); });
+
+
+		});
+
+
+	</script>
+
+</body>
